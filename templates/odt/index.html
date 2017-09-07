@@ -1,0 +1,246 @@
+<body>
+    <form style="display:block; text-align: right" action="/odt" method="get">
+        <div class="search-param">
+            Model Name:
+            <input type="text" name="model_name" value="{{query.model_name|default_if_none:''}}" />
+        </div>
+        <div class="search-param">
+            Field Name:
+            <input type="text" name="field_name" value="{{query.field_name|default_if_none:''}}" />
+        </div>
+        <div class="search-param">
+            Field Doc:
+            <input type="text" name="field_help_text" value="{{query.field_help_text|default_if_none:''}}" />
+        </div>
+        <div class="search-param">
+            <input type="submit" value="Search" />
+        </div>
+    </form>
+    <form style="display:block; text-align: right" action="/odt/" method="post" enctype="multipart/form-data">
+        <div class="search-param">
+            Upload Config for Updating: <input type="file" name="config" />
+            <input type="submit" value="Upload" />
+        </div>
+    </form>
+{% if models %}
+    <form action="{% url 'odt.views.generate_config' %}" method="POST">
+    <table class="model-table">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="check-all" onclick="checkAll()" /></th>
+                <th>No</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Documentation</th>
+                <th>Args</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in models %}
+            <tr class="model-name">
+                <td>
+                {% if config and config|get_item:m.full_name|get_item:"_" %}
+                    <input type="checkbox" class="check-model" name="{{m.full_name}}" checked="checked"/>
+                {% else %}
+                    <input type="checkbox" class="check-model" name="{{m.full_name}}"/>
+                {% endif %}
+                </td>
+                <td>{{forloop.counter}}.</td>
+                <td colspan=3>{{m.name}}</td>
+                <td>{{m.full_name}}</td>
+            </tr>
+            <tr class="model-doc">
+                <td></td>
+                <td colspan=5>{{m.doc}}</td>
+            </tr>
+                {% for f in m.get_serialized_fields %}
+                <tr class="field">
+                    <td></td>
+                    <td>
+                        {% if f.class_name != 'AutoField' %}
+                        {% if config and config|get_item:m.full_name|get_item:f.name %}
+                        <input type="checkbox" class="check-field" name="{{m.full_name}}|{{f.name}}" checked="checked"/>
+                        {% else %}
+                        <input type="checkbox" class="check-field" name="{{m.full_name}}|{{f.name}}"/>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                    <td class="field-name">{{f.name}}</td>
+                    <td>{{f.class_name}}</td>
+                    <td class="field-doc">{{f.help_text|default_if_none:""}}</td>
+                    <td>
+                        {% if f.relation %}
+                            {{f.relation}} {{f.related_model_path}}.{{f.related_model_name}}
+                        {% endif %}
+                        {% if f.max_length %}
+                            max_length={{f.max_length}},
+                        {% endif %}
+                        {% if f.decimal_places %}
+                            decimal_places={{f.decimal_places}},
+                        {% endif %}
+                        {% if f.max_digits %}
+                            max_digits={{f.max_digits}},
+                        {% endif %}
+                        {% if f.null %}
+                            null={{f.null}},
+                        {% endif %}
+                        {% if f.blank %}
+                            blank={{f.blank}},
+                        {% endif %}
+                        {% if f.default %}
+                            default={{f.default}},
+                        {% endif %}
+                        {% if f.key_label %}
+                            key_label="{{f.key_label}}",
+                        {% endif %}
+                        {% if f.value_label %}
+                            value_label="{{f.value_label}}",
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="sticky-bottom">
+        <input type="submit" value="Generate ODT Config" />
+    </div>
+    </form>
+{% else %}
+    <p align="center">No models are available.</p>
+{% endif %}
+</body>
+<style>
+    body {
+        background-color: #000;
+        color: #fff;
+        font-family: Arial;
+        padding: 0;
+        margin: 0;
+        padding-bottom: 25px;
+    }
+
+    .search-param {
+        display: inline-block;
+        padding: 0.3em 1em;
+    }
+
+    .search-param input {
+        padding: 0.7em;
+    }
+
+    .search-param input[type="submit"] {
+        padding: 0.5em;
+        min-width: 100px;
+        font-weight: bold;
+        font-size: 1.1em;
+        border-radius: 20px;
+        border: 1px solid #ff9900;
+    }
+
+    .search-param input[type="text"] {
+        background-color: #444;
+        color: #fff;
+        border: 1px solid #999;
+        border-radius: 20px;
+    }
+
+    th {
+        padding: 0.5em;
+        color: yellow;
+    }
+
+    td {
+        padding: 0.3em 0.4em;
+    }
+
+    .model-table {
+        border: none;
+        border-collapse: collapse;
+        width: 100%;
+        background-color: #444;
+        color: #fff;
+    }
+
+    .model-name {
+        background-color: #00ff00;
+        color: #000;
+        font-weight: bold;
+    }
+
+    .model-doc {
+        background-color: #336633;
+    }
+
+    .field:nth-child(even) {
+        background-color: #222;
+    }
+
+    .field:nth-child(even) .field-doc {
+        background-color: #000;
+    }
+
+    .field-name {
+
+    }
+
+    .field-doc {
+        background-color: #222;
+    }
+
+    .sticky-bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+
+    .sticky-bottom input[type="submit"] {
+        padding: 0.5em;
+        width: 100%;
+        font-weight: bold;
+        font-size: 1.1em;
+        border: 1px solid #dd7700;
+    }
+
+    button, input[type="submit"] {
+        cursor: pointer;
+        color: #fff;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#dd7700), to(#cc6600));
+        background-image: -webkit-linear-gradient(top, #dd7700, #cc6600);
+        background-image: -moz-linear-gradient(top, #dd7700, #cc6600);
+        background-image: linear-gradient(to bottom, #dd7700, #cc6600);
+    }
+
+    button:hover, input[type="submit"]:hover {
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#ff9900), to(#ff9900));
+        background-image: -webkit-linear-gradient(top, #ff9900, #ff9900);
+        background-image: -moz-linear-gradient(top, #ff9900, #ff9900);
+        background-image: linear-gradient(to bottom, #ff9900, #ff9900);
+    }
+</style>
+<script>
+    function checkAll() {
+        if (document.getElementById("check-all").checked) {
+            chks = document.getElementsByClassName("check-model")
+            Array.prototype.forEach.call(chks, function(chk) {
+                chk.checked = true;
+            });
+
+            chks = document.getElementsByClassName("check-field")
+            Array.prototype.forEach.call(chks, function(chk) {
+                chk.checked = true;
+            });
+        } else {
+            chks = document.getElementsByClassName("check-model")
+            Array.prototype.forEach.call(chks, function(chk) {
+                chk.checked = false;
+            });
+
+            chks = document.getElementsByClassName("check-field")
+            Array.prototype.forEach.call(chks, function(chk) {
+                chk.checked = false;
+            });
+        }
+    }
+</script>
