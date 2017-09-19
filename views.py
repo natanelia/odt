@@ -1,5 +1,6 @@
 import json
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
 from django.shortcuts import render
@@ -37,6 +38,7 @@ def index(request):
     }
     return render(request, 'odt/index.html', context)
 
+@user_passes_test(lambda u: u.is_superuser)
 @csrf_exempt
 def generate_config(request):
     queries = request.POST

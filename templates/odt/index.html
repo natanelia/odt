@@ -16,18 +16,24 @@
             <input type="submit" value="Search" />
         </div>
     </form>
+    {% if request.user.is_superuser %}
     <form style="display:block; text-align: right" action="/odt/" method="post" enctype="multipart/form-data">
         <div class="search-param">
             Upload Config for Updating: <input type="file" name="config" />
             <input type="submit" value="Upload" />
         </div>
     </form>
+    {% endif %}
 {% if models %}
     <form action="{% url 'odt.views.generate_config' %}" method="POST">
     <table class="model-table">
         <thead>
             <tr>
-                <th><input type="checkbox" id="check-all" onclick="checkAll()" /></th>
+                <th>
+                    {% if request.user.is_superuser %}
+                    <input type="checkbox" id="check-all" onclick="checkAll()" />
+                    {% endif %}
+                </th>
                 <th>No</th>
                 <th>Name</th>
                 <th>Type</th>
@@ -39,10 +45,12 @@
             {% for m in models %}
             <tr class="model-name">
                 <td>
+                {% if request.user.is_superuser %}
                 {% if config and config|get_item:m.full_name|get_item:"_" %}
                     <input type="checkbox" class="check-model" name="{{m.full_name}}" checked="checked"/>
                 {% else %}
                     <input type="checkbox" class="check-model" name="{{m.full_name}}"/>
+                {% endif %}
                 {% endif %}
                 </td>
                 <td>{{forloop.counter}}.</td>
@@ -57,11 +65,13 @@
                 <tr class="field">
                     <td></td>
                     <td>
+                        {% if request.user.is_superuser %}
                         {% if f.class_name != 'AutoField' %}
                         {% if config and config|get_item:m.full_name|get_item:f.name %}
                         <input type="checkbox" class="check-field" name="{{m.full_name}}|{{f.name}}" checked="checked"/>
                         {% else %}
                         <input type="checkbox" class="check-field" name="{{m.full_name}}|{{f.name}}"/>
+                        {% endif %}
                         {% endif %}
                         {% endif %}
                     </td>
@@ -102,9 +112,12 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {% if request.user.is_superuser %}
     <div class="sticky-bottom">
         <input type="submit" value="Generate ODT Config" />
     </div>
+    {% endif %}
     </form>
 {% else %}
     <p align="center">No models are available.</p>
